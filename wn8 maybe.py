@@ -4,7 +4,7 @@ expAvgFrag = 1, 1, 1
 expAvgSpot = 0.78, 1, 1.24
 expAvgDef = 0.1, 0.15, 0.17
 expWin = 0.5
-scaling = 1350/1241.2  # value you want to lean towards to / actual value that leans to (if same as expected value)
+scaling = 1350/1241.2  # value you want to lean towards to / actual value that leans to (
 
 # just testing for now
 
