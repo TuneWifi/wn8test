@@ -4,7 +4,7 @@ expAvgFrag = 1, 1, 1
 expAvgSpot = 0.78, 1, 1.24
 expAvgDef = 0.1, 0.15, 0.17
 expWin = 0.5
-scaling = 1350/1241.2  # value you want to lean towards to / actual value that leans to (if same as expected value)
+scaling = 1450/1511  # value you want to lean towards to / actual value that leans to (if same as expected value)
 
 # just testing for now
 
@@ -44,15 +44,15 @@ expAPP = games * expAvgAPP[rank_index]
 rAPP = aAPP / expAPP
 
 if rAPP < 0.55:
-    rAPP_scaled = (rAPP / 0.55) ** 3 * 0.5
+  rAPP_scaled = (rAPP / 0.55) ** 2.2 * 0.55
 elif rAPP <= 1.0:
-    rAPP_scaled = 0.5 + ((rAPP - 0.5) / 0.5) ** 0.5 * 0.35
+  rAPP_scaled = 0.5 + ((rAPP - 0.5) / 0.5) ** 0.5 * 0.35
 elif rAPP <= 1.3:
-    rAPP_scaled = 0.85 + ((rAPP - 1.0) / 0.5) ** 2 * 0.35
+  rAPP_scaled = 0.85 + ((rAPP - 1.0) / 0.5) ** 2.2 * 0.4
 else:
-    rAPP_scaled = 1.2 + ((rAPP - 1.3) ** 2) * 0.5
+  rAPP_scaled = 1.05 + ((rAPP - 1.3) ** 0.75) * 0.5
 
-rAPPc = max(0, ((rAPP_scaled - 0.22) / (1 - 0.22))) ** 1.44
+rAPPc = max(0, ((rAPP_scaled - 0.22) / (1 - 0.22))) ** 1.7
 
 # calculate calibrated app ig
 
@@ -83,10 +83,10 @@ else:
     aWin = games * (win/100)
     expWin = games * expWin
     rWin = aWin/expWin
-    rWINc = max(0, (rWin - 0.71) / (1 - 0.71))
+    rWINc = max(0, ((rWin - 0.71) / (1 - 0.71) ** 1.14 ))
 
 # winrate ig
-WN8 = int((1010*rAPPc + 130*rAPPc*rFRAGc + 30*rFRAGc*rSPOTc + 60*rDEFc*rFRAGc + 360*min(1.8,rWINc)) * scaling)
+WN8 = int((1090*rAPPc + 152*rAPPc*rFRAGc + 65*rFRAGc*rSPOTc + 95*rDEFc*rFRAGc + 210 * rWINc * rAPPc + 410*min(1.8,rWINc)) * scaling)
 # wn8 ig
 
 print(WN8)
