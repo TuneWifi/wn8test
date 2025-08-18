@@ -4,7 +4,8 @@ expAvgFrag = 1, 1, 1
 expAvgSpot = 0.78, 1, 1.24
 expAvgDef = 0.1, 0.15, 0.17
 expWin = 0.5
-scaling = 1450/1511  # value you want to lean towards to / actual value that leans to (if same as expected value)
+scaling = 1450/1696  # value you want to lean towards to / actual value that leans to (if same as expected value)
+APPscal = 1020/758  # maybe i should try make a universal scaling
 
 # just testing for now
 
@@ -33,7 +34,7 @@ else:
 try:
     win = float(win)
     if not (0 <= win <= 100):
-        print("incorrect value")
+        print("incorrect winrate value")
         win = None
 except ValueError:
     win = None
@@ -83,33 +84,39 @@ else:
     aWin = games * (win/100)
     expWin = games * expWin
     rWin = aWin/expWin
-    rWINc = max(0, ((rWin - 0.71) / (1 - 0.71) ** 1.14 ))
+    rWINc = max(0, ((rWin - 0.71) / (1 - 0.71) ** 1.1 ))
 
 # winrate ig
-WN8 = int((1090*rAPPc + 152*rAPPc*rFRAGc + 65*rFRAGc*rSPOTc + 95*rDEFc*rFRAGc + 210 * rWINc * rAPPc + 410*min(1.8,rWINc)) * scaling)
+WN8 = int((1090*rAPPc + 152*rAPPc*rFRAGc + 65*rFRAGc*rSPOTc + 95*rDEFc*rFRAGc + 210 * rWINc * rAPPc + 378*min(1.8,rWINc)) * scaling)
 # wn8 ig
 
-print(WN8)
+print(f"Total WN8: {WN8}")
 
-if WN8 < 300:
-    print("Status: Dark Red (Very Bad)")
-elif 300 <= WN8 < 450:
-    print("Status: Red (Bad)")
-elif 450 <= WN8 < 650:
-    print("Status: Orange (Below Average)")
-elif 650 <= WN8 < 900:
-    print("Status: Yellow (Average)")
-elif 900 <= WN8 < 1200:
-    print("Status: Light Green (Above Average)")
-elif 1200 <= WN8 < 1600:
-    print("Status: Green (Good)")
-elif 1600 <= WN8 < 2000:
-    print("Status: Light Blue (Very Good)")
-elif 2000 <= WN8 < 2450:
-    print("Status: Blue (Great)")
-elif 2450 <= WN8 < 2900:
-    print("Status: Violet (Unicum)")
-else:
-    print("Status: Dark Violet (Super Unicum)")
+def wn8_status(wn8):
+    if wn8 < 300:
+        return "Status: Dark Red (Very Bad)"
+    elif 300 <= wn8 < 450:
+        return "Status: Red (Bad)"
+    elif 450 <= wn8 < 650:
+        return "Status: Orange (Below Average)"
+    elif 650 <= wn8 < 900:
+        return "Status: Yellow (Average)"
+    elif 900 <= wn8 < 1200:
+        return "Status: Light Green (Above Average)"
+    elif 1200 <= wn8 < 1600:
+        return "Status: Green (Good)"
+    elif 1600 <= wn8 < 2000:
+        return "Status: Light Blue (Very Good)"
+    elif 2000 <= wn8 < 2450:
+        return "Status: Blue (Great)"
+    elif 2450 <= wn8 < 2900:
+        return "Status: Violet (Unicum)"
+    else:
+        return "Status: Dark Violet (Super Unicum)"
+print(wn8_status(WN8))
 
 print(f"rAPPc: {rAPPc:.2f}, rFRAGc: {rFRAGc:.2f}, rSPOTc: {rSPOTc:.2f}, rDEFc: {rDEFc:.2f}, rWINc: {rWINc:.2f}")
+
+ind_wn8 = int((1090*rAPPc)*scal2)
+print(f"APP WN8: {ind_wn8}")
+print(wn8_status(ind_wn8))
