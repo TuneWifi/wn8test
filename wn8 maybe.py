@@ -117,6 +117,6 @@ print(wn8_status(WN8))
 
 print(f"rAPPc: {rAPPc:.2f}, rFRAGc: {rFRAGc:.2f}, rSPOTc: {rSPOTc:.2f}, rDEFc: {rDEFc:.2f}, rWINc: {rWINc:.2f}")
 
-ind_wn8 = int((1090*rAPPc)*scal2)
+ind_wn8 = int((1090*rAPPc)*APPscal)
 print(f"APP WN8: {ind_wn8}")
 print(wn8_status(ind_wn8))
