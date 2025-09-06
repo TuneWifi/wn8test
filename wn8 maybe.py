@@ -1,3 +1,4 @@
+import sys
 
 expAvgAPP = 0.68, 0.85, 1.07
 expAvgFrag = 1, 1, 1
@@ -37,19 +38,22 @@ def float_check(value, name="", allow_none=True, min_val=None, max_val=None):
         exit()
 
 # rank Input
-ranking_input = input("Rank (bm / gm / wm): ").strip().lower()
+fields = [
+    ("ranking", "Rank (bm / gm / wm): "),
+    ("games", "total games: "),
+    ("AvgAPP", "average APP: "),
+    ("win", "winrate (0-100 or none): "),
+    ("cheese", "cheese index: "),
+    ("APPnDSpP", "APP+DS/p: "),
+    ("DSpP", "DS/p: "),
+]
 
-if ranking_input in ("bm", "black major"):
-    rank_index = 0
-elif ranking_input in ("wm", "white major"):
-    rank_index = 2
-elif ranking_input in ("gm", "gray major"):
-    rank_index = 1
-else:
-    print("Defaulted to Gray Major")
-    rank_index = 1  # Default to "gm"
+input_data = {}
+history = []
 
-# default per rank
+rank_index = 1
+rank_key = "gm"
+
 rank_defaults = {
     "bm": {
         "AvgAPP": expAvgAPP[0],
@@ -71,94 +75,162 @@ rank_defaults = {
     }
 }
 
-# initial default source (based on inputted rank)
-rank_key = "bm" if rank_index == 0 else "wm" if rank_index == 2 else "gm"
-
-# Master default (used if 'use_default')
 DEFAULT_VALUES = {
     "games": 100,
-    "AvgAPP": rank_defaults[rank_key]["AvgAPP"],
+    "AvgAPP": expAvgAPP[rank_index],
     "win": 50,
-    "cheese": rank_defaults[rank_key]["cheese"],
-    "APPnDSpP": rank_defaults[rank_key]["APPnDSpP"],
-    "DSpP": rank_defaults[rank_key]["DSpP"],
-    "ranking": ranking_input
+    "cheese": expAvgFrag[rank_index],
+    "APPnDSpP": expAvgSpot[rank_index],
+    "DSpP": expAvgDef[rank_index],
+    "ranking": "gm",
 }
 
-# Input Fields
-fields = [
-    ("games", "total games: "),
-    ("AvgAPP", "average APP: "),
-    ("win", "winrate (0-100 or none): "),
-    ("cheese", "cheese index: "),
-    ("APPnDSpP", "APP+DS/p: "),
-    ("DSpP", "DS/p: "),
-]
-
-input_data = {}
 use_all_defaults = False
 use_rest_defaults = False
-forced_rank = None  # If "use_default_all_bm" is typed, etc.
+forced_rank = None
 
-for key, prompt in fields:
-    user_input = input(prompt).strip().lower()
+i = 0
+while i < len(fields):
+    key, prompt = fields[i]
 
-    # check for full override commands
-    if user_input.startswith("use_default_all_"):
-        tag = user_input.replace("use_default_all_", "")
-        if tag in rank_defaults:
-            forced_rank = tag
+    while True:
+        user_input = input(prompt).strip().lower()
+
+        if user_input == "exit":
+            print("Exiting program.")
+            exit()
+
+        if user_input.startswith("back"):
+            parts = user_input.split("(")
+            num_back = 1
+            if len(parts) > 1 and parts[1].endswith(")"):
+                try:
+                    num_back = int(parts[1][:-1])
+                    if num_back < 0:
+                        print("Error: Negative number in back(). Try again.")
+                        continue
+                except ValueError:
+                    print("Error: Invalid back(n) format. Try again.")
+                    continue
+
+            new_pos = max(0, i - num_back)
+            for rem_i in range(new_pos, len(fields)):
+                rem_key = fields[rem_i][0]
+                input_data.pop(rem_key, None)
+
+            i = new_pos
+            history = history[:i]
+            print(f"Going back to: {fields[i][1]}")
+            break  # jump back
+
+        # Handle default commands
+        if user_input.startswith("use_default_all_"):
+            tag = user_input.replace("use_default_all_", "")
+            if tag in rank_defaults:
+                forced_rank = tag
+                use_all_defaults = True
+                i = len(fields)
+                break
+            else:
+                print("Invalid rank tag for use_default_all_. Try again.")
+                continue
+        elif user_input == "use_default_all":
+            forced_rank = rank_key
             use_all_defaults = True
+            i = len(fields)
             break
-    elif user_input == "use_default_all":
-        forced_rank = rank_key
-        use_all_defaults = True
-        break
 
-    # partial (rest) default override
-    elif user_input.startswith("use_default_rest_"):
-        tag = user_input.replace("use_default_rest_", "")
-        if tag in rank_defaults:
-            forced_rank = tag
+        elif user_input.startswith("use_default_rest_"):
+            tag = user_input.replace("use_default_rest_", "")
+            if tag in rank_defaults:
+                forced_rank = tag
+                use_rest_defaults = True
+                input_data[key] = None
+                i = len(fields)
+                break
+            else:
+                print("Invalid rank tag for use_default_rest_. Try again.")
+                continue
+        elif user_input == "use_default_rest":
+            forced_rank = rank_key
             use_rest_defaults = True
-            input_data[key] = None  # mark as skipped for now
+            input_data[key] = None
+            i = len(fields)
             break
-    elif user_input == "use_default_rest":
-        forced_rank = rank_key
-        use_rest_defaults = True
-        input_data[key] = None
+
+
+        elif user_input.startswith("use_default_"):
+            tag = user_input.replace("use_default_", "")
+            if tag in rank_defaults:
+                input_data[key] = rank_defaults[tag].get(key, DEFAULT_VALUES.get(key))
+            else:
+                input_data[key] = DEFAULT_VALUES.get(key)
+            history.append(key)
+            i += 1
+            break
+        elif user_input == "use_default":
+            input_data[key] = DEFAULT_VALUES[key]
+            history.append(key)
+            i += 1
+            break
+
+        # Special parsing for ranking
+        if key == "ranking":
+            if user_input in ("bm", "black major"):
+                rank_index = 0
+            elif user_input in ("gm", "gray major"):
+                rank_index = 1
+            elif user_input in ("wm", "white major"):
+                rank_index = 2
+            else:
+                print("Invalid rank. Defaulted to Gray Major.")
+                rank_index = 1
+                user_input = "gm"
+
+            rank_key = ["bm", "gm", "wm"][rank_index]
+
+            DEFAULT_VALUES.update({
+                "AvgAPP": expAvgAPP[rank_index],
+                "cheese": expAvgFrag[rank_index],
+                "APPnDSpP": expAvgSpot[rank_index],
+                "DSpP": expAvgDef[rank_index],
+                "ranking": user_input
+            })
+
+            input_data["ranking"] = user_input
+            history.append(key)
+            i += 1
+            break
+
+        # Regular input
+        input_data[key] = user_input
+        history.append(key)
+        i += 1
         break
 
-    # Ind default overrides
-    elif user_input.startswith("use_default_"):
-        tag = user_input.replace("use_default_", "")
-        if tag in rank_defaults:
-            input_data[key] = rank_defaults[tag][key] if key in rank_defaults[tag] else DEFAULT_VALUES[key]
-        else:
-            input_data[key] = DEFAULT_VALUES[key]
-    elif user_input == "use_default":
-        input_data[key] = DEFAULT_VALUES[key]
-    else:
-        input_data[key] = user_input
-
-# apply full default if triggered
+# Apply defaults
 if use_all_defaults:
     print(f"\nUsing all default values from {forced_rank.upper()}...\n")
     for key, _ in fields:
-        input_data[key] = rank_defaults.get(forced_rank, {}).get(key, DEFAULT_VALUES.get(key, 0))
+        input_data[key] = rank_defaults.get(forced_rank, {}).get(key, DEFAULT_VALUES.get(key))
+        pass
 elif use_rest_defaults:
     print(f"\nUsing default values from {forced_rank.upper()} for remaining fields...\n")
     for key, _ in fields:
-        if key not in input_data or input_data[key] in (None, "", "none"):
-            input_data[key] = rank_defaults.get(forced_rank, {}).get(key, DEFAULT_VALUES.get(key, 0))
+        if input_data.get(key) in (None, "", "none"):
+            input_data[key] = rank_defaults.get(forced_rank, {}).get(key, DEFAULT_VALUES.get(key))
+            pass
 
-# Parse Inputs
-games = float_check(input_data["games"], "games") if not isinstance(input_data["games"], float) else input_data["games"]
-AvgAPP = float_check(input_data["AvgAPP"], "AvgAPP") if not isinstance(input_data["AvgAPP"], float) else input_data["AvgAPP"]
-win = float_check(input_data["win"], name="winrate", allow_none=True, min_val=0, max_val=100)
-cheese = float_check(input_data["cheese"], "cheese") if not isinstance(input_data["cheese"], float) else input_data["cheese"]
-APPnDSpP = float_check(input_data["APPnDSpP"], "APP+DS/p") if not isinstance(input_data["APPnDSpP"], float) else input_data["APPnDSpP"]
-DSpP = float_check(input_data["DSpP"], "DS/p") if not isinstance(input_data["DSpP"], float) else input_data["DSpP"]
+# Final parsing
+games = float_check(input_data["games"], "games")
+AvgAPP = float_check(input_data["AvgAPP"], "AvgAPP")
+win = float_check(input_data["win"], "winrate", allow_none=True, min_val=0, max_val=100)
+cheese = float_check(input_data["cheese"], "cheese")
+APPnDSpP = float_check(input_data["APPnDSpP"], "APP+DS/p")
+DSpP = float_check(input_data["DSpP"], "DS/p")
+
+rank_input = input_data["ranking"]
+rank_index = {"bm": 0, "gm": 1, "wm": 2}.get(rank_input, 1)
 
 aAPP = games * AvgAPP
 expAPP = games * expAvgAPP[rank_index]
